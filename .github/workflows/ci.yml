@@ -51,6 +51,7 @@ jobs:
           path: release-assets/
           if-no-files-found: error
           retention-days: 14
+          overwrite: true
 
   release:
     name: 发布 main 构建
