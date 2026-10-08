@@ -1,0 +1,11 @@
+# pnpm 12 的依赖/安装配置位置。只包含根应用，不创建任何子工作区。
+packages: []
+engineStrict: true
+saveExact: true
+overrides:
+  vite: 5.2.8
+allowBuilds:
+  esbuild: true
+  '@parcel/watcher': true
+  core-js: false
+  core-js-pure: false

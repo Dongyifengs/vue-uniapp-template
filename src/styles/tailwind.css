@@ -1,0 +1,9 @@
+@import 'tailwindcss';
+
+@source '../pages/**/*.vue';
+@source '../components/**/*.vue';
+@source '../composables/**/*.ts';
+@source '../constants/**/*.ts';
+@source not '../../node_modules';
+@source not '../../dist';
+@source not '../uni_modules';

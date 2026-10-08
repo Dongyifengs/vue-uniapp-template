@@ -1,0 +1,23 @@
+{
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "^wd-(.*)": "@wot-ui/ui/components/wd-$1/wd-$1.vue"
+    }
+  },
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": { "navigationBarTitleText": "模板首页" }
+    },
+    {
+      "path": "pages/examples/index",
+      "style": { "navigationBarTitleText": "基础功能示例" }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarBackgroundColor": "#f5f7fb",
+    "backgroundColor": "#f5f7fb"
+  }
+}

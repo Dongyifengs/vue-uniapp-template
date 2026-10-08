@@ -1,0 +1,13 @@
+node_modules/
+dist/
+unpackage/
+coverage/
+.vitest/
+.tools/
+.cache/
+*.tsbuildinfo
+.env.local
+.env.*.local
+project.private.config.json
+.DS_Store
+*.log
