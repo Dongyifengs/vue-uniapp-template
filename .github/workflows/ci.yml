@@ -1,0 +1,98 @@
+name: CI 与 Release
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: 检查与跨端构建
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+
+      - uses: pnpm/action-setup@v6
+        with:
+          cache: true
+
+      - name: 安装锁定依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 检查代码与测试
+        run: pnpm check
+
+      - name: 构建微信小程序、H5 和 App 资源
+        run: pnpm build
+
+      - name: 打包下载文件
+        run: |
+          mkdir -p release-assets
+          (cd dist/build/h5 && zip -qr "$GITHUB_WORKSPACE/release-assets/h5.zip" .)
+          (cd dist/build/mp-weixin && zip -qr "$GITHUB_WORKSPACE/release-assets/mp-weixin.zip" .)
+          (cd release-assets && sha256sum h5.zip mp-weixin.zip > SHA256SUMS.txt)
+
+      - name: 保存构建产物
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-assets
+          path: release-assets/
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: 发布 main 构建
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-assets
+          path: release-assets/
+
+      - name: 生成更新说明与 PR 链接
+        uses: actions/github-script@v9
+        with:
+          retries: 3
+          script: |
+            const { writeFileSync } = require('node:fs')
+            const generateReleaseNotes = require('./.github/scripts/release-notes.cjs')
+            writeFileSync('release-notes.md', await generateReleaseNotes({ github, context }))
+
+      - name: 创建或更新 Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          tag="build-${GITHUB_RUN_NUMBER}-${GITHUB_SHA:0:7}"
+          if gh release view "$tag" > /dev/null 2>&1; then
+            gh release upload "$tag" release-assets/* --clobber
+          else
+            gh release create "$tag" release-assets/* \
+              --target "$GITHUB_SHA" --title "$tag" \
+              --notes-file release-notes.md --draft
+          fi
+          gh release edit "$tag" --notes-file release-notes.md --draft=false
+          printf '### Release 已发布\n\n[%s](%s/releases/tag/%s)\n' \
+            "$tag" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "$tag" >> "$GITHUB_STEP_SUMMARY"
