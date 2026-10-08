@@ -6,7 +6,7 @@ export default defineConfig({
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   test: {
     environment: 'node',
-    include: ['test/unit/**/*.test.ts'],
+    include: ['test/unit/**/*.test.{ts,js}'],
     setupFiles: ['test/setup.ts'],
     coverage: {
       provider: 'v8',

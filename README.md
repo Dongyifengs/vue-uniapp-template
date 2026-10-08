@@ -304,6 +304,31 @@ pnpm build
 
 推荐提交信息示例：`feat(pages): 添加个人资料页`、`fix(request): 修复接口超时处理`。
 
+### CI 与自动 Release
+
+`.github/workflows/ci.yml` 在各分支 push 和面向 `main` 的 PR 创建、更新或重新打开时运行：
+
+1. 使用 `.nvmrc` 中的 Node.js 和 `package.json#packageManager` 中的 pnpm，按锁文件安装依赖。
+2. 执行 `pnpm check` 与 `pnpm build`，验证微信小程序、H5 和 App 资源。
+3. 打包 H5 与微信小程序，保存到该次 Actions 运行的 `release-assets` 附件，保留 14 天；开发分支和 PR 可从这里下载验证。
+4. 仅当 push 更新 `main` 且上述检查、构建均成功时，发布正式 [GitHub Release](https://github.com/Dongyifengs/vue-uniapp-template/releases)。PR 合并通过这一次 `main` push 发布，不重复发版。
+
+本地 `git commit` 后需执行 `git push` 才能触发 CI。关闭但未合并的 PR 不发布；开发分支和未合并 PR 只验证并保存构建产物。合并与直接 push 均以触发 CI 的实际提交构建，不取任务开始后的最新分支内容。
+
+Release 标签格式为 `build-<Actions运行序号>-<提交短SHA>`，每次 `main` push 生成独立版本，不自动修改应用版本号。重跑同一次任务复用标签、更新附件和说明。发布先创建草稿，附件上传成功后转为正式 Release。
+
+| 下载文件         | 内容与使用方式                                                        |
+| ---------------- | --------------------------------------------------------------------- |
+| `h5.zip`         | H5 生产文件，解压后部署到静态站点服务                                 |
+| `mp-weixin.zip`  | 微信小程序生产文件，解压后将目录导入微信开发者工具                    |
+| `SHA256SUMS.txt` | 两个 ZIP 的 SHA-256 校验值，可运行 `sha256sum -c SHA256SUMS.txt` 校验 |
+
+更新说明自动列出本次 push 的提交标题、提交链接、关联的已合并 PR 地址及 Actions 运行链接；覆盖普通合并、squash 和 rebase。直接 push 没有关联 PR 时会明确标注。提交标题和 PR 标题应写明用户可理解的更新内容。
+
+构建 job 只有仓库读取权限；Release job 仅在 `main` push 时取得 `contents: write` 与 `pull-requests: read`，使用 GitHub 自动提供的 `GITHUB_TOKEN`，无需额外配置发布密钥。若组织策略禁止写入，需由仓库管理员允许 Actions 发布 Release。
+
+构建包沿用仓库中的 `src/manifest.json` 与生产环境配置；正式使用前应配置自己的 AppID 和 API 地址。该流程发布下载包，不自动部署 H5、上传微信公众平台或生成 APK/IPA。
+
 ## 7. 版本兼容与升级
 
 本模板在 **2026-10-08** 核对 npm 最新稳定版本，并优先服从 uni-app 编译链和各库声明的兼容范围。直接依赖精确锁定，完整依赖树记录在 `pnpm-lock.yaml`。
