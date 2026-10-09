@@ -16,8 +16,17 @@ export async function request<T>(options: RequestOptions): Promise<T> {
 
   let url = options.url
   if (!/^https?:\/\//i.test(url)) {
-    if (!/^https?:\/\//i.test(env.apiBaseUrl)) {
-      throw new RequestError('请先配置 VITE_API_BASE_URL 为完整的 HTTP(S) 接口地址', 'CONFIG')
+    let allowDevProxy = false
+    // #ifdef H5
+    if (import.meta.env.DEV && /^\/api\/?$/.test(env.apiBaseUrl)) {
+      allowDevProxy = true
+    }
+    // #endif
+    if (!/^https?:\/\//i.test(env.apiBaseUrl) && !allowDevProxy) {
+      throw new RequestError(
+        '请先配置 VITE_API_BASE_URL 为完整的 HTTP(S) 接口地址（H5 开发可使用 /api）',
+        'CONFIG',
+      )
     }
     url = `${env.apiBaseUrl.replace(/\/+$/, '')}/${url.replace(/^\/+/, '')}`
   }

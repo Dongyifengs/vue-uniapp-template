@@ -4,23 +4,34 @@
 
 源码位于根目录 `src/`，全部命令在项目根目录执行。没有 Monorepo、Turborepo 或子包。
 
-## 1. 环境与快速开始
+## 1. 5 分钟跑起来
+
+最快可先运行 H5：安装 [Node.js 24.21.0](https://nodejs.org/)，然后执行：
+
+```bash
+git clone https://github.com/Dongyifengs/vue-uniapp-template.git
+cd vue-uniapp-template
+npm install -g pnpm@12.10.1
+pnpm install
+pnpm dev:h5
+```
+
+浏览器打开终端显示的地址（默认 **http://127.0.0.1:5173**）。预期看到模板首页；点击「打开功能示例」，再点击「加载数据」，会通过默认 Mock 显示三条示例数据，无需后端。
+
+| 端         | 启动命令             | 查看方式                                              |
+| ---------- | -------------------- | ----------------------------------------------------- |
+| H5         | `pnpm dev:h5`        | 打开终端显示的浏览器地址                              |
+| 微信小程序 | `pnpm dev:mp-weixin` | 微信开发者工具导入项目根目录下的 `dist/dev/mp-weixin` |
+| App 资源   | `pnpm dev:app`       | HBuilderX 导入整个项目根目录，再运行到手机或模拟器    |
+
+### 环境要求
 
 - Node.js：推荐 **24.21.0**，要求 `^24.11.0`；版本记录在 `.nvmrc`。
-- pnpm：**12.10.1**，版本记录在 `package.json` 的 `packageManager`。
+- 包管理器：只使用 **pnpm 12.10.1**；`package.json` 的 `packageManager` 和 `engines` 已固定版本。运行 `node --version`、`pnpm --version` 核对。
 - 微信开发者工具：用于查看、调试和上传微信小程序。
 - HBuilderX：用于 App 真机运行和 APK/IPA 打包，建议使用与当前 uni-app 编译器对应的稳定版本。
 
-先安装 [Node.js](https://nodejs.org/)，再安装 pnpm：
-
-```bash
-npm install -g pnpm@12.10.1
-node --version
-pnpm --version
-pnpm install
-```
-
-如果使用 nvm，可按 `.nvmrc` 安装、切换 Node 版本。`pnpm` 出现 `shim integrity check failed` 时，修复或重新安装本机包管理器；也可使用 `npx pnpm@12.10.1 install` 临时运行指定版本。
+如果使用 nvm，可按 `.nvmrc` 安装并切换 Node。`pnpm` 出现 `shim integrity check failed` 时，修复或重新安装本机包管理器；也可使用 `npx pnpm@12.10.1 install` 临时运行指定版本。
 
 ### 微信小程序
 
@@ -53,6 +64,17 @@ pnpm dev:app
 
 命令生成并监听 `dist/dev/app` 中的 App 资源，终端本身不会启动手机基座。使用 HBuilderX 导入整个项目根目录，再通过「运行 → 运行到手机或模拟器」完成真机运行。
 
+### 常见启动问题
+
+| 现象                                | 检查方法                                                                                                                                |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `Unsupported engine` 或依赖安装失败 | 对照 `.nvmrc` 切换到 Node 24.21.0，确认 pnpm 为 12.10.1，再运行 `pnpm install`。                                                        |
+| `shim integrity check failed`       | 修复本机 pnpm shim，或先用 `npx pnpm@12.10.1 install` 安装依赖。                                                                        |
+| H5 端口 5173 已占用                 | 执行 `pnpm dev:h5 --port 5174`，打开终端实际显示的地址。                                                                                |
+| H5 接口未走代理                     | 确认 `.env.development.local` 设置 `VITE_API_BASE_URL=/api`、`VITE_USE_MOCK=false` 与有效的 `VITE_PROXY_TARGET`，修改后重启开发服务器。 |
+| 小程序无法导入或缺少平台能力        | 先等 `dist/dev/mp-weixin` 生成；游客模式仅供本地体验，平台能力和真机预览需在 `src/manifest.json` 配置自己的 AppID。                     |
+| `pnpm dev:app` 未弹出手机应用       | 此命令只生成 App 资源；仍需在 HBuilderX 中运行到手机或模拟器。                                                                          |
+
 ## 2. 常用命令与导出
 
 | 命令                                | 用途                       | 默认产物               |
@@ -64,12 +86,17 @@ pnpm dev:app
 | `pnpm build:h5`                     | H5 生产构建                | `dist/build/h5`        |
 | `pnpm build:app`                    | App 生产资源构建           | `dist/build/app`       |
 | `pnpm build`                        | 顺序构建上述三个目标       | 对应平台目录           |
+| `pnpm analyze`                      | 微信小程序主包体积分析     | `dist/analyze/`        |
 | `pnpm lint` / `pnpm lint:fix`       | ESLint 检查 / 自动修复     | —                      |
 | `pnpm format` / `pnpm format:check` | Prettier 格式化 / 格式检查 | —                      |
 | `pnpm type-check`                   | 检查应用、配置与测试类型   | —                      |
 | `pnpm test` / `pnpm test:watch`     | 单次测试 / 监听测试        | —                      |
 | `pnpm test:coverage`                | 测试覆盖率                 | `coverage/index.html`  |
 | `pnpm check`                        | Lint、格式、类型和单元测试 | —                      |
+
+### 小程序主包体积分析
+
+执行 `pnpm analyze` 会构建微信小程序，并生成两个本地报告：`dist/analyze/mp-weixin.html` 显示 JS 模块占用，`dist/analyze/mp-weixin-files.md` 按字节数列出主包内所有文件（不含 `app.json` 声明的分包）。先用文件清单找出最大的 JS、模板、样式或资源文件，再用 HTML 图表追查 JS 依赖。清单是原始产物大小，最终上传包大小以微信开发者工具为准。普通 `pnpm build` 不生成报告，报告本身也不会进入小程序包。
 
 ### 微信小程序发行
 
@@ -122,6 +149,7 @@ vue-uniapp-template/
 ├── test/unit/                       # 单元测试
 ├── test/mocks/                      # 单元测试用 uni API 替身
 ├── test/setup.ts                    # 测试隔离与环境初始化
+├── scripts/analyze-mp.mjs           # 小程序主包文件体积清单
 ├── .husky/pre-commit                # 暂存文件提交检查
 ├── .env.example                     # 本地环境配置示例
 ├── .env.development                 # 开发默认配置
@@ -236,7 +264,7 @@ export function getProfile() {
 }
 ```
 
-`request<T>` 返回 `uni.request` 响应的 **`data` 字段原样内容**，不会自动剥离业务包装层。支持 `method`、`data`、`header`、`timeout` 等原生请求参数，默认超时 10 秒；完整 HTTP(S) URL 可直接调用，相对地址与 `VITE_API_BASE_URL` 拼接。
+`request<T>` 返回 `uni.request` 响应的 **`data` 字段原样内容**，不会自动剥离业务包装层。支持 `method`、`data`、`header`、`timeout` 等原生请求参数，默认超时 10 秒；完整 HTTP(S) URL 可直接调用，相对地址与 `VITE_API_BASE_URL` 拼接。H5 开发态可用 `/api` 基址接入同源代理，其他情况需要完整 HTTP(S) 基址。
 
 `RequestError` 包含 `code`（`CONFIG`、`HTTP`、`NETWORK`、`TIMEOUT`）和可选 `statusCode`。HTTP 非 2xx、网络失败、超时与缺失地址均会抛出错误。
 
@@ -259,14 +287,24 @@ async function load() {
 
 ## 5. 环境配置与 Mock
 
-把 `.env.example` 复制为 `.env.local`，填写本地接口地址：
+开发时把 `.env.example` 复制为 `.env.development.local`，填写接口地址；该文件会覆盖仓库里的 `.env.development` 默认值：
 
 ```dotenv
 VITE_API_BASE_URL=https://api.example.com
 VITE_USE_MOCK=false
 ```
 
-环境文件修改后重启开发命令。`.env.local` 不提交；`VITE_*` 会进入客户端产物，不能用于保存密钥。
+H5 开发需要绕开后端跨域限制时，可在 `.env.development.local` 改用同源代理：
+
+```dotenv
+VITE_API_BASE_URL=/api
+VITE_USE_MOCK=false
+VITE_PROXY_TARGET=http://127.0.0.1:3000
+```
+
+浏览器请求 `/api/demo/items` 时，Vite 会将相同路径转发到 `VITE_PROXY_TARGET`。后端需要提供带 `/api` 前缀的路由；端口 3000 只是示例，请换成自己的本地或远端后端地址。代理只用于 H5 开发服务器，小程序和 App 请求仍需完整的 HTTP(S) 接口地址及对应平台配置。
+
+环境文件修改后重启开发命令。`.env.development.local` 不提交；`VITE_*` 会进入客户端产物，不能用于保存密钥。
 
 - 开发默认：`VITE_USE_MOCK=true`，示例无需后端。
 - 生产默认：关闭 Mock，并在构建期移除 Mock 模块和数据；即使设置 `VITE_USE_MOCK=true`，生产构建也不会启用 Mock。
@@ -290,7 +328,7 @@ pnpm check
 pnpm test:coverage
 ```
 
-测试位于 `test/unit`，以 `.test.ts` 命名。已有测试覆盖计数器实例隔离、Vue 订阅与清理、异步请求状态与旧请求覆盖、HTTP/网络/超时错误、Mock 与生产开关，以及日期格式化。
+测试位于 `test/unit`，以 `.test.ts` 或 `.test.js` 命名。已有测试覆盖计数器实例隔离、Vue 订阅与清理、异步请求状态与旧请求覆盖、HTTP/网络/超时错误、Mock 与生产开关、主包文件排除，以及日期格式化。
 
 `test/mocks/uni.ts` 提供 `uni.request` 替身，`test/setup.ts` 在每个测试之间重置请求、环境变量和全局对象。单元测试不依赖微信开发者工具；平台能力仍需在对应平台验证。
 
@@ -351,6 +389,8 @@ Release 标签格式为 `build-<Actions运行序号>-<提交短SHA>`，每次 `m
 | ESLint / Prettier / Husky | `10.12.0` / `3.9.9` / `9.1.7` | 最新稳定版                                                      |
 | @dcloudio/types           | `3.4.31`                      | 满足 uni-app 的精确 peer 约束                                   |
 | miniprogram-api-typings   | `5.2.3`                       | 微信原生 API 类型，供 Wot 源码和平台扩展使用                    |
+| rollup-plugin-visualizer  | `7.1.1`                       | 分析小程序构建的 JS 模块体积                                    |
+| cross-env                 | `10.1.0`                      | 跨平台开启 `pnpm analyze` 的分析开关                            |
 
 不要对整个项目直接执行 `pnpm update --latest`：uni-app 的 npm `latest` 标签不一定对应 Vue 3 编译系列，也不能独立升级 Vite、Vue 或某一个 `@dcloudio/*` 编译包。
 
