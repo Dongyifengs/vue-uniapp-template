@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import { onLaunch } from '@dcloudio/uni-app'
+// #ifdef MP-WEIXIN
+import { registerMiniProgramUpdate } from './utils/mini-program-update'
+// #endif
 
 onLaunch(() => {
-  // 应用初始化入口：按业务需要添加初始化逻辑。
+  // #ifdef MP-WEIXIN
+  registerMiniProgramUpdate()
+  // #endif
 })
 </script>
 
