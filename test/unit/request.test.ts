@@ -32,6 +32,22 @@ describe('request', () => {
     expect(requestMock).not.toHaveBeenCalled()
   })
 
+  it('H5 开发态将 /api 相对基址交给同源代理', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', '/api')
+    respondWith(200, { ok: true })
+    const { request } = await import('@/utils/request')
+    await expect(request({ url: '/demo/items' })).resolves.toEqual({ ok: true })
+    expect(requestMock).toHaveBeenCalledWith(expect.objectContaining({ url: '/api/demo/items' }))
+  })
+
+  it('生产环境拒绝 /api 相对基址', async () => {
+    vi.stubEnv('DEV', false)
+    vi.stubEnv('VITE_API_BASE_URL', '/api')
+    const { request } = await import('@/utils/request')
+    await expect(request({ url: '/demo/items' })).rejects.toMatchObject({ code: 'CONFIG' })
+    expect(requestMock).not.toHaveBeenCalled()
+  })
+
   it('非 2xx 响应作为 HTTP 错误抛出', async () => {
     respondWith(500, { message: '失败' })
     const { request } = await import('@/utils/request')
